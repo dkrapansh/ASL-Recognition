@@ -26,9 +26,9 @@ This matters because:
 - Inference runs in real time on CPU with no GPU dependency
 - The feature engineering step (scale normalization via bounding box) ensures the model is invariant to hand distance from camera
 
----
-
 ## Project structure
+
+```
 ├── collect_imgs.py        # Webcam-based data collection for all 26 classes
 ├── create_dataset.py      # MediaPipe landmark extraction + feature engineering pipeline
 ├── train_classifier.py    # Model training with cross-validation and per-class evaluation
@@ -37,8 +37,7 @@ This matters because:
 ├── model.p                # Trained Random Forest classifier
 ├── data.pickle            # Processed landmark dataset
 └── requirements.txt
----
-
+```
 ## How to run
 
 **1. Clone the repo**
