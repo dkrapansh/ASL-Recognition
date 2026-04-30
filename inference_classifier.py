@@ -55,10 +55,17 @@ with vision.HandLandmarker.create_from_options(options) as landmarker:
             y2 = int(max(y_) * H) + 10
 
             prediction = model.predict([np.asarray(data_aux)])
-            predicted_character = labels_dict[int(prediction[0])]
+            prediction_proba = model.predict_proba([np.asarray(data_aux)])
+            confidence = np.max(prediction_proba)
 
+            if confidence > 0.6:
+                predicted_character = prediction[0]
+            else:
+                predicted_character = "?"
+            
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 0), 4)
-            cv2.putText(frame, predicted_character, (x1, y1 - 10),
+            label = '{} ({:.0f}%)'.format(predicted_character, confidence * 100)
+            cv2.putText(frame, label, (x1, y1 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 0, 0), 3, cv2.LINE_AA)
 
         cv2.imshow('ASL Recognition', frame)
