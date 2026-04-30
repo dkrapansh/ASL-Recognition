@@ -1,51 +1,52 @@
 import os
 import pickle
-
-import mediapipe as mp
 import cv2
-import matplotlib.pyplot as plt
+import mediapipe as mp
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
 
-
-mp_hands = mp.solutions.hands
-mp_drawing = mp.solutions.drawing_utils
-mp_drawing_styles = mp.solutions.drawing_styles
-
-hands = mp_hands.Hands(static_image_mode=True, min_detection_confidence=0.3)
+base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
+options = vision.HandLandmarkerOptions(
+    base_options=base_options,
+    num_hands=1,
+    running_mode=vision.RunningMode.IMAGE
+)
 
 DATA_DIR = './data'
-
 data = []
 labels = []
-for dir_ in os.listdir(DATA_DIR):
-    for img_path in os.listdir(os.path.join(DATA_DIR, dir_)):
-        data_aux = []
 
-        x_ = []
-        y_ = []
+with vision.HandLandmarker.create_from_options(options) as landmarker:
+    for dir_ in os.listdir(DATA_DIR):
+        for img_path in os.listdir(os.path.join(DATA_DIR, dir_)):
+            data_aux = []
+            x_ = []
+            y_ = []
 
-        img = cv2.imread(os.path.join(DATA_DIR, dir_, img_path))
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = cv2.imread(os.path.join(DATA_DIR, dir_, img_path))
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=img_rgb)
 
-        results = hands.process(img_rgb)
-        if results.multi_hand_landmarks:
-            hand_landmarks = results.multi_hand_landmarks[0]
+            results = landmarker.detect(mp_image)
 
-            for i in range(len(hand_landmarks.landmark)):
-                x_.append(hand_landmarks.landmark[i].x)
-                y_.append(hand_landmarks.landmark[i].y)
+            if results.hand_landmarks:
+                hand_landmarks = results.hand_landmarks[0]
 
-            x_range = max(x_) - min(x_)
-            y_range = max(y_) - min(y_)
+                for landmark in hand_landmarks:
+                    x_.append(landmark.x)
+                    y_.append(landmark.y)
 
-            for i in range(len(hand_landmarks.landmark)):
-                x = hand_landmarks.landmark[i].x
-                y = hand_landmarks.landmark[i].y
-                data_aux.append((x - min(x_)) / x_range if x_range > 0 else 0)
-                data_aux.append((y - min(y_)) / y_range if y_range > 0 else 0)
-                
-            data.append(data_aux)
-            labels.append(dir_)
+                x_range = max(x_) - min(x_)
+                y_range = max(y_) - min(y_)
 
-f = open('data.pickle', 'wb')
-pickle.dump({'data': data, 'labels': labels}, f)
-f.close()
+                for landmark in hand_landmarks:
+                    data_aux.append((landmark.x - min(x_)) / x_range if x_range > 0 else 0)
+                    data_aux.append((landmark.y - min(y_)) / y_range if y_range > 0 else 0)
+
+                data.append(data_aux)
+                labels.append(dir_)
+
+with open('data.pickle', 'wb') as f:
+    pickle.dump({'data': data, 'labels': labels}, f)
+
+print("Dataset created: {} samples across {} classes".format(len(data), len(set(labels))))
