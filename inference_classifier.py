@@ -15,7 +15,7 @@ mp_drawing_styles = mp.solutions.drawing_styles
 
 hands = mp_hands.Hands(static_image_mode=False, min_detection_confidence=0.3, max_num_hands=1)
 
-labels_dict = {0: 'A', 1: 'S', 2: 'L'}  #ONLY 3 ALPHABETS FOR NOW
+labels_dict = {i: letter for i, letter in enumerate('ABCDEFGHIJKLMNOPQRSTUVWXYZ')}
 while True:
 
     data_aux = []
